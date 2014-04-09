@@ -1,8 +1,6 @@
 package chat.gui;
 
-import java.awt.BorderLayout;
 import java.awt.Container;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,8 +29,9 @@ public class View extends JFrame implements ActionListener{
 	public void buildGUI(){
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setSize(600, 400);
-		JPanel buttons = new JPanel();
 		receive.setEditable(false);
+		
+		//Add menu
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		JMenu jMenu = new JMenu("File");
@@ -40,10 +39,14 @@ public class View extends JFrame implements ActionListener{
 		JMenuItem menuItem = new JMenuItem("Dit is een item");
 		jMenu.add(menuItem);
 		
+		//Add buttons
+		JPanel buttons = new JPanel();
 		buttons.add(clear);
 		clear.addActionListener(this);
 		buttons.add(send);	
 		send.addActionListener(this);
+		
+		//Add container
 		Container cc = getContentPane();
 		cc.setLayout(new GridLayout(3,1,10,10));
 		cc.add(receive);
