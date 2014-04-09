@@ -20,33 +20,30 @@ public class Peer implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
-	public void send(Packet packet){
+
+	public void send(Packet packet) {
 		try {
 			multicastSocket.send(new DatagramPacket(packet.getBytes(), packet.length(), multicastAddress, port));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	
-	public void run(){
+
+	public void run() {
 		while (true) {
 			byte[] buffer = new byte[1000];
 			DatagramPacket receive = new DatagramPacket(buffer, buffer.length);
 			try {
 				multicastSocket.receive(receive);
-				if (receive.getAddress() != multicastSocket.getLocalAddress()) {
-					System.out.println(new Packet(receive.getData()));
-				}
+				//TODO Send this to networkcontroller (networkcontroller might have to make peer)
+				System.out.println(new String(new Packet(receive.getData()).getPayload()));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
-	
-	public void close(){
+
+	public void close() {
 		multicastSocket.close();
 	}
 }

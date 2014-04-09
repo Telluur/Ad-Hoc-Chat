@@ -15,9 +15,10 @@ public class ChatClient {
 		try {
 			group = InetAddress.getByName("228.5.6.7");
 			Peer peer = new Peer(group, 6789);
-			peer.send(new Packet(0 , 0, "dit is die message van een andere".getBytes()));
 			new Thread(peer).start();
+			new NetworkController(0, peer);
 			
+			peer.send(new Packet(0, 1, 0, Flag.SYN, 0, "dit is een message van client 1".getBytes()));			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
