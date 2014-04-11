@@ -17,7 +17,6 @@ public class Packet {
 		data[3] = (byte) flag.getNumber();
 		data[4] = (byte) flagNumber;
 		System.arraycopy(payload, 0, data, 5, payload.length);
-		System.out.println("Input: " + new String(payload) + " : "  + new String(Arrays.copyOfRange(data, 5, data.length)));
 	}
 	
 	public byte[] getBytes() {
