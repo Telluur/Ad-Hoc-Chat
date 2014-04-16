@@ -7,26 +7,30 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.HashMap;
-import chat.gui.View;
+
+import chat.objects.GlobalChat;
+import chat.objects.PrivateChat;
+import chat.gui.AppView;
 
 public class NetworkController {
 
-	private int deviceNumber;
+	public int deviceNumber;
 	private Peer peer;
-	
+
+	private AppView appView;
+
 	private TimeoutTimer timeoutTimer;
 
-	private View view;
+	private GlobalChat globalChat;
 
-	private HashMap<Integer, Client> clients = new HashMap<>();
-	private HashMap<Integer, AckTimer> ackTimers = new HashMap<>();
-
+	// Hashmap of active private chats (Key: source)
+	private HashMap<Integer, PrivateChat> privateChats = new HashMap<>();
+	
 	public static void main(String[] args) {
 		new NetworkController();
 	}
 
 	public NetworkController() {
-		this.view = new View(this);
 		InetAddress group;
 		try {
 			InetAddress inetAddress = getAddress();
@@ -38,9 +42,21 @@ public class NetworkController {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		
-		timeoutTimer = new TimeoutTimer(clients, view);
+
+		appView = new AppView(this);
+
+		globalChat = new GlobalChat(peer, deviceNumber, 0, appView);
+
+		timeoutTimer = new TimeoutTimer(globalChat.getClients(), globalChat.getView());
 		timeoutTimer.start();
+	}
+	
+	public int getDeviceNumber() {
+		return deviceNumber;
+	}
+
+	public GlobalChat getGlobalChat() {
+		return globalChat;
 	}
 
 	private InetAddress getAddress() {
@@ -63,66 +79,38 @@ public class NetworkController {
 		return null;
 	}
 
-	public void onReceive(Packet packet) {
-		if (packet.getSource() != deviceNumber) {
-			if (packet.getDestination() == 0 || packet.getDestination() == deviceNumber) {
-				// Accept packet
-				Client client;
-				if (clients.containsKey(packet.getSource())) {
-					client = clients.get(packet.getSource());
-				} else {
-					client = new Client(packet.getSource(), packet.getFlagNumber());
-					clients.put(packet.getSource(), client);
-					view.addText(packet.getSource() + " connected!");
-				}
-				client.setLastBro(System.currentTimeMillis());
-				
-				if (packet.getFlag() == Flag.BRO) {
-					// Client has already been added & timer has been updated.
-				} else if (packet.getFlag() == Flag.SYN) {
-					if (clients.get(packet.getSource()).getSyn() <= packet.getFlagNumber()) {
-						// Message received, add this to GUI window.
-						view.addText(packet.getSource(), new String(packet.getPayload()));
-						// Update syn
-						clients.get(packet.getSource()).setSyn(packet.getFlagNumber() + 1);
-						// Send ACK back
-						peer.send(new Packet(5, deviceNumber, packet.getSource(), Flag.ACK, packet.getFlagNumber(), new byte[0]));
-					}
-				} else if (packet.getFlag() == Flag.ACK) {
-					System.out.println("Got ack! " + packet.getFlagNumber());
-					//TODO Loopt vast bij deze if
-					if (ackTimers.containsKey(packet.getFlagNumber())) {
-						AckTimer ackTimer = ackTimers.get(packet.getFlagNumber());
-						ackTimer.addAck(packet.getSource());
-						System.out.println("Added ack!");
-						if (ackTimer.gotAllAcks()) {
-							System.out.println("Got all acks, removed timer!");
-							ackTimers.remove(packet.getFlagNumber());
-						}
-					}
-					// Acknowledgement for message received.
-					// TODO Add ack system.
-					// TODO Add time before message
-				}
-			}
-			//Check if you were the only destination, no need to resend in that case.
-			if (packet.getHops() > 0 && packet.getDestination() != deviceNumber) {
-				peer.send(new Packet(packet.getHops() - 1, packet.getSource(), packet.getDestination(), packet.getFlag(), packet.getFlagNumber(), packet.getPayload()));
-			}
+	public void startPrivateChat(int destination) {
+		if (!privateChats.containsKey(destination)) {
+			PrivateChat privateChat = new PrivateChat(peer, deviceNumber, destination, appView, globalChat.getClients());
+			privateChats.put(destination, privateChat);
 		}
 	}
 
-	public void send(String text) {
-		view.addText(deviceNumber, text);
-		Packet packet = new Packet(5, deviceNumber, 0, Flag.SYN, peer.getSyn(), text.getBytes());
-		peer.send(packet);
-		
-		//Start ack timer.
-		if (clients.size() > 0) {
-			System.out.println("Starting ack timer!");
-			AckTimer ackTimer = new AckTimer(peer, packet, clients);
-			ackTimer.start();
-			ackTimers.put(peer.getSyn(), ackTimer);
+	public void onReceive(Packet packet) {
+		if (packet.getSource() != deviceNumber) {
+			globalChat.addClient(packet.getSource(), packet.getFlagNumber());
+			if (!globalChat.getClients().get(packet.getSource()).gotPacket(packet.getPacketId())) {
+				if (packet.getDestination() == 0 || packet.getDestination() == deviceNumber) {
+					 // Handle normal group chat
+					if (!packet.isPrivateChat()) {
+						globalChat.onReceive(packet);
+					} else {
+						if (!privateChats.containsKey(packet.getSource())) {
+							PrivateChat privateChat = new PrivateChat(peer, deviceNumber, packet.getSource(), appView, globalChat.getClients());
+							privateChats.put(packet.getSource(), privateChat);
+						}
+						privateChats.get(packet.getSource()).onReceive(packet);
+					}
+				}
+				// Check if you were the only destination, no need to resend in that case.
+				if (packet.getHops() > 0 && packet.getDestination() != deviceNumber) {
+					peer.send(new Packet(packet.getHops() - 1, packet.getSource(), packet.getDestination(), packet.getFlag(), packet.getFlagNumber(), packet.isPrivateChat(), packet.getPacketId(), packet.getPayload()));
+				}
+			}
 		}
 	}
 }
+
+// Client (deviceNumber) Can be in group AND private chat at the same time
+// Syn number Is different per client AND in private chat
+// Moet per packet zijn (anders kan dubbel packet al worden verstuurd na 1ms ipv 5000)

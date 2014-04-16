@@ -1,56 +1,63 @@
 package chat.network;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import chat.objects.Client;
 
 public class AckTimer extends Thread {
-	private boolean gotAllAcks = false;
-	private List<Integer> receivedAcks = new ArrayList<>();
-
 	private Peer peer;
 	private Packet packet;
-	private HashMap<Integer, Client> clients;
+	private Client client;
+	private int syn;
 
-	public AckTimer(Peer peer, Packet packet, HashMap<Integer, Client> clients) {
+	private int resendCount = 0;
+	private boolean keepGoing = true;
+
+	private final int MAX_RETRIES = 6;
+
+	public AckTimer(Peer peer, Packet packet, Client client, int syn) {
 		this.peer = peer;
 		this.packet = packet;
-		this.clients = clients;
+		this.client = client;
+		this.syn = syn;
 	}
 
-	public boolean gotAllAcks() {
-		return gotAllAcks;
+	public Client getClient() {
+		return client;
 	}
 
-	public void addAck(int source) {
-		receivedAcks.add(source);
+	public int getSyn() {
+		return syn;
+	}
 
-		for (Client client : clients.values()) {
-			if (!receivedAcks.contains(client.getId())) {
-				break;
-			}
-			gotAllAcks = true;
-		}
+	public void stopRunning() {
+		keepGoing = false;
 	}
 
 	@Override
 	public void run() {
-		while (!gotAllAcks) {
-			for (Client client : clients.values()) {
-				//Also check for received acks here in case a client disconnected before sending an ack.
-				boolean resend = false;
-				if (!receivedAcks.contains(client.getId())) {
-					System.out.println("Resending..." + packet.getHops() + " , " + packet.getSource() + " , "  + client.getId());
-					peer.send(new Packet(packet.getHops(), packet.getSource(), client.getId(), packet.getFlag(), packet.getFlagNumber(), packet.getPayload()));
-					resend = true;
-				}
-				gotAllAcks = !resend;
+		// Wait 5 seconds before first resend.
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+		}
+
+		while (keepGoing) {
+			resendCount++;
+
+			peer.send(new Packet(packet.getHops(), packet.getSource(), client.getId(), packet.getFlag(), packet.getFlagNumber(), packet.isPrivateChat(), resendCount, packet.getPayload()));
+
+			if (resendCount >= MAX_RETRIES) {
+				keepGoing = false;
 			}
+
 			try {
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "client " + client.getId() + " , syn " + syn;
 	}
 }
