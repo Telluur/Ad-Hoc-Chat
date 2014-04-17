@@ -2,6 +2,8 @@ package chat.network;
 
 import java.util.Arrays;
 
+import chat.objects.Flag;
+
 public class Packet {
 	byte[] data;
 

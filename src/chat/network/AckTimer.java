@@ -1,6 +1,7 @@
 package chat.network;
 
 import chat.objects.Client;
+import chat.objects.Peer;
 
 public class AckTimer extends Thread {
 	private Peer peer;

@@ -4,9 +4,7 @@ import java.util.HashMap;
 
 import chat.gui.AppView;
 import chat.network.AckTimer;
-import chat.network.Flag;
 import chat.network.Packet;
-import chat.network.Peer;
 
 public class PrivateChat extends Chat {
 	private Client client;
@@ -21,6 +19,8 @@ public class PrivateChat extends Chat {
 
 	@Override
 	public void onReceive(Packet packet) {
+		globalClients.get(packet.getSource()).setLastBro(System.currentTimeMillis());
+		
 		if (packet.getFlag() == Flag.SYN) {
 			// Send ACK back
 			peer.send(new Packet(globalClients.size() - 1, deviceNumber, packet.getSource(), Flag.ACK, packet.getFlagNumber(), true, peer.getPacketId(), new byte[0]));
@@ -41,7 +41,6 @@ public class PrivateChat extends Chat {
 
 	@Override
 	public void send(String text) {
-		System.out.println("Sending to: " + destination);
 		view.addText(deviceNumber, text);
 
 		Packet packet = createPacket(text, globalClients.size() - 1);

@@ -4,9 +4,7 @@ import java.util.HashMap;
 
 import chat.gui.AppView;
 import chat.network.AckTimer;
-import chat.network.Flag;
 import chat.network.Packet;
-import chat.network.Peer;
 
 public class GlobalChat extends Chat {
 	// Hashmap of connected clients. Key: client devicenumber

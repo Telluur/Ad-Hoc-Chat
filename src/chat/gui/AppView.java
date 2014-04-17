@@ -76,7 +76,6 @@ public class AppView extends JFrame implements ActionListener {
         if(source instanceof JMenuItem){
         	JMenuItem menuItem = (JMenuItem) source;
         	networkController.startPrivateChat(Integer.parseInt(menuItem.getText()));
-        	System.out.println(menuItem.getText());
         }
     }
 }

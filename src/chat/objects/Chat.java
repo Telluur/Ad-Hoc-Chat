@@ -6,9 +6,7 @@ import java.util.List;
 import chat.gui.AppView;
 import chat.gui.ChatView;
 import chat.network.AckTimer;
-import chat.network.Flag;
 import chat.network.Packet;
-import chat.network.Peer;
 
 public abstract class Chat {	
 	protected int destination = 0;

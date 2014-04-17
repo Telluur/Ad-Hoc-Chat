@@ -9,6 +9,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 
 import chat.objects.GlobalChat;
+import chat.objects.Peer;
 import chat.objects.PrivateChat;
 import chat.gui.AppView;
 
@@ -38,7 +39,6 @@ public class NetworkController {
 
 			group = InetAddress.getByName("226.1.2.3");
 			peer = new Peer(this, group, 6789, deviceNumber);
-			new Thread(peer).start();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -49,6 +49,8 @@ public class NetworkController {
 
 		timeoutTimer = new TimeoutTimer(globalChat.getClients(), globalChat.getView());
 		timeoutTimer.start();
+		
+		new Thread(peer).start();
 	}
 	
 	public int getDeviceNumber() {
@@ -110,7 +112,3 @@ public class NetworkController {
 		}
 	}
 }
-
-// Client (deviceNumber) Can be in group AND private chat at the same time
-// Syn number Is different per client AND in private chat
-// Moet per packet zijn (anders kan dubbel packet al worden verstuurd na 1ms ipv 5000)

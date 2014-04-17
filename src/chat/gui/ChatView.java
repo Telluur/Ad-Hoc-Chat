@@ -76,7 +76,6 @@ public class ChatView extends JPanel implements ActionListener {
 	public void addText(String message) {
 		final JScrollBar scrollBar = scrollText.getVerticalScrollBar();
 		boolean end = scrollBar.getMaximum() == scrollBar.getValue() + scrollBar.getVisibleAmount();
-		System.out.println(end);
 
 		receive.append(message + lineSeparator);
 
@@ -97,13 +96,11 @@ public class ChatView extends JPanel implements ActionListener {
 
 	public void actionPerformed(ActionEvent ev) {
 		Object src = ev.getSource();
-		System.out.println("Enter clicked!");
 		if (src == clear) {
 			text.setText(null);
 			receive.setText(null);
 		} else if (src == send || src == text) {
 			if (!text.getText().isEmpty()) {
-				System.out.println(scrollText.getVerticalScrollBar().getValue() + " , " + scrollText.getVerticalScrollBar().getAlignmentY());
 				chat.send(text.getText());
 				text.setText(null);
 			}

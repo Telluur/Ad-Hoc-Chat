@@ -1,6 +1,7 @@
 package chat.network;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 import chat.objects.Client;
 
@@ -18,10 +19,12 @@ public class TimeoutTimer extends Thread {
 	@Override
 	public void run() {
 		while (true) {
-			for (Client client : clients.values()) {
-				if (System.currentTimeMillis() - client.getLastBro() > 30000) {
+			Iterator<Client> iterator = clients.values().iterator();
+			while (iterator.hasNext()) {
+				Client client = iterator.next();
+				if (System.currentTimeMillis() - client.getLastBro() > 5000) {
 					view.addText(client.getId() + " has timed out.");
-					clients.remove(client.getId());
+					iterator.remove();
 				}
 			}
 			try {
