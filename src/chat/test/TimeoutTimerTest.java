@@ -37,7 +37,7 @@ public class TimeoutTimerTest {
 
 		clients = createClients();
 
-		TimeoutTimer timeoutTimer = new TimeoutTimer(clients, chatView);
+		TimeoutTimer timeoutTimer = new TimeoutTimer(clients, appView, chatView);
 		timeoutTimer.start();
 	}
 

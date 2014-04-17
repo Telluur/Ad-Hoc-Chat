@@ -47,7 +47,7 @@ public class NetworkController {
 
 		globalChat = new GlobalChat(peer, deviceNumber, 0, appView);
 
-		timeoutTimer = new TimeoutTimer(globalChat.getClients(), globalChat.getView());
+		timeoutTimer = new TimeoutTimer(globalChat.getClients(), appView, globalChat.getView());
 		timeoutTimer.start();
 		
 		new Thread(peer).start();
