@@ -1,4 +1,4 @@
 Chat
 ====
 
-HUE
+Ad-hoc chat applicatie.
